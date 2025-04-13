@@ -1,6 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+import os
+import pandas as pd
+import time
+
 
 def scrape_annonces():
     base_url = "http://www.tunisie-annonce.com/"
@@ -10,9 +14,12 @@ def scrape_annonces():
     date_limite = datetime(2025, 1, 1)
 
     annonces_liste = []
+    page_count = 1
 
     while url:
         full_url = base_url + url
+        print(f"🔄 Scraping page {page_count}: {full_url}")
+
         response = session.get(full_url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
         annonces = soup.find_all("a", href=True)
@@ -29,7 +36,6 @@ def scrape_annonces():
                 adresse = prix = surface = description = contact = "Non trouvé"
                 date_insertion = "Non trouvée"
 
-                # contact
                 contact_span = detail_soup.find("span", class_="da_contact_value")
                 if contact_span:
                     contact = contact_span.text.strip()
@@ -52,10 +58,9 @@ def scrape_annonces():
                     elif label_text == "Insérée le":
                         date_insertion = value_cell.text.strip()
 
-                # filtre par date
                 try:
                     date_obj = datetime.strptime(date_insertion, "%d/%m/%Y")
-                    if date_obj < datetime(2025, 1, 1):
+                    if date_obj < date_limite:
                         continue
                 except:
                     continue
@@ -71,7 +76,8 @@ def scrape_annonces():
                     "Contact": contact
                 })
 
-        # pagination
+                time.sleep(0.5)
+
         next_page = soup.find("img", {"src": "/images/n_next.gif"})
         if next_page:
             next_link = next_page.find_parent("a")
@@ -80,3 +86,10 @@ def scrape_annonces():
             url = None
 
     return annonces_liste
+
+
+if __name__ == "__main__":
+    os.makedirs("data", exist_ok=True)
+    data = scrape_annonces()
+    df = pd.DataFrame(data)
+    df.to_csv("data/annonces.csv", index=False, encoding="utf-8-sig")

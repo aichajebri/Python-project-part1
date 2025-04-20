@@ -59,4 +59,29 @@ app.layout = html.Div([
      Output('stats-box', 'children')],
     Input('ville-dropdown', 'value')
 )
+def update_dashboard(selected_ville):
+    dff = df_top[df_top['Adresse'] == selected_ville]
 
+    fig_prix = px.histogram(dff, x='prix', nbins=50, title=f"Distribution des prix à {selected_ville}")
+    fig_surface = px.histogram(dff, x='surface', nbins=50, title=f"Distribution des surfaces à {selected_ville}")
+    fig_scatter = px.scatter(dff, x='surface', y='prix', title=f"Prix vs Surface à {selected_ville}",
+                             labels={'surface': 'Surface (m²)', 'prix': 'Prix (TND)'})
+    fig_dates = px.histogram(dff, x='date', title=f"Nombre d'annonces au fil du temps à {selected_ville}")
+
+    moyenne_prix = round(dff['prix'].mean(), 2)
+    max_prix = round(dff['prix'].max(), 2)
+    min_prix = round(dff['prix'].min(), 2)
+    nb_annonces = len(dff)
+
+    stats = html.Div([
+        html.H4(f"📍 Ville : {selected_ville}"),
+        html.P(f"Nombre d’annonces : {nb_annonces}"),
+        html.P(f"Prix moyen : {moyenne_prix} TND"),
+        html.P(f"Prix minimum : {min_prix} TND"),
+        html.P(f"Prix maximum : {max_prix} TND"),
+    ])
+
+    return fig_prix, fig_surface, fig_scatter, fig_dates, stats
+
+if __name__ == '__main__':
+    app.run(debug=True)

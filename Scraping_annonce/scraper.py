@@ -41,6 +41,23 @@ def scrape_annonces():
                     contact = contact_span.text.strip()
 
                 label_cells = detail_soup.find_all("td", class_="da_label_field")
+                for label in label_cells:
+                    label_text = label.text.strip()
+                    value_cell = label.find_next_sibling("td", class_="da_field_text")
+                    if not value_cell:
+                        continue
+
+                    if label_text == "Adresse":
+                        adresse = value_cell.text.strip()
+                    elif label_text == "Prix":
+                        prix = value_cell.text.strip()
+                    elif label_text == "Surface":
+                        surface = value_cell.text.strip()
+                    elif label_text == "Texte":
+                        description = value_cell.text.strip()
+                    elif label_text == "Insérée le":
+                        date_insertion = value_cell.text.strip()
+
                 try:
                     date_obj = datetime.strptime(date_insertion, "%d/%m/%Y")
                     if date_obj < date_limite:
@@ -62,7 +79,14 @@ def scrape_annonces():
                 time.sleep(0.5)
 
         next_page = soup.find("img", {"src": "/images/n_next.gif"})
-       
+        if next_page:
+            next_link = next_page.find_parent("a")
+            url = next_link["href"] if next_link and "href" in next_link.attrs else None
+        else:
+            url = None
+
+    return annonces_liste
+
 
 if __name__ == "__main__":
     os.makedirs("data", exist_ok=True)
